@@ -1,0 +1,43 @@
+            <ul class="list-unstyled">
+                <li style="margin: 5px;" align="center" ng-repeat="(id, data) in links">
+                    <div class="row">
+                        <div class="col-md-1">
+                            <a href="#" class="thumbnail">
+                                <img src="../static/images/icon.ico" alt="try">
+                            </a>
+                        </div>
+                        <div class="col-md-11">
+                            <a href="{{data[0]}}">{{data[1]}}</a>
+                            <nav>
+                                <ul class="nav nav-pills pull-right">
+                                    <!--li role="presentation"><button data-toggle="modal" data-target="#editBox" class="small btn btn-default">Edit</button></li-->
+                                    <li role="presentation">
+                                        <a href data-toggle="modal" data-target="#editBox_{{id}}" class="small">Edit</a>
+                                        <div class="modal fade" id="editBox_{{id}}" role="dialog">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h4 class="modal-title">{{data[1]}}</h4>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <ul class="list-unstyled">
+                                                            Title: <input ng-model="new_title" type="text" class="form-control" placeholder="{{data[1]}}" aria-describedby="sizing-addon1"> 
+                                                        </ul>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button"
+                                                        ng-click="submit_data(id, new_title); new_title='';" class="btn btn-success" data-dismiss="modal">Submit</button>
+                                                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div> <!-- End of modal -->
+                                    </li>
+                                    <li role="presentation"><a href ng-click="removeLink(id);" class="small">Remove</a></li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                    <hr>
+                </li>
+            </ul>
