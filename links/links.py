@@ -1,5 +1,6 @@
 from flask import jsonify, render_template, request, flash, redirect, url_for, jsonify
 from datetime import datetime
+import random
 
 from apps import links_app
 from models import Links
@@ -44,3 +45,15 @@ def url():
     #result = Links.query.all()
     print "selected all the table"
     return jsonify({r.uuid:[r.link, r.title]    for r in result})
+
+@links_app.route("/random", methods=["GET"])
+def random_url():
+    count = Links.query.count()
+    rand = random.randrange(1, count)
+    l = Links.query.filter_by(id=rand).first()
+    try:
+        print l.link
+        return jsonify({"link": l.link})
+    except:
+        return random_url()
+        

@@ -18,8 +18,6 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular-route.js"></script>
-        <!-- script src="../static/js/ui-bootstrap-2.2.0.min.js"></script>
-        <script src="../static/js/ui-bootstrap-tpls-2.2.0.min.js"></script-->
     <meta charset="utf-8">
     </head>
 
@@ -28,8 +26,9 @@
       <div class="header clearfix" style="margin: 0 10%;">
         <nav>
           <ul class="nav nav-pills pull-right">
-            <li role="presentation" class="active"><a href="#">Home</a></li>
+            <li role="presentation" class="active"><a href="#/">Home</a></li>
             <li role="presentation"><a href="#list">Links</a></li>
+            <li ng-controller="redirector" role="presentation"><a href ng-click="randomLink();" target="_blank">SURPRISE ME!!</a></li>
           </ul>
         </nav>
         <h3 class="text-muted">Links</h3>
@@ -46,21 +45,43 @@
             var app = angular.module("root", ["ngRoute"]);
             app.config(["$routeProvider", function($routeProvider) {
                     $routeProvider
+                        .when("/", {
+                            templateUrl : "../static/main.html",
+                            controller  : "redirector"
+                            })
                         .when("/list", {
                             templateUrl : "../static/list.html",
                             controller  : "content"
-                            })
-                        .when("/download", {
-                            templateUrl : "../static/download.html",
-                            controller  : "content"
                             });
                     }]);
-            app.controller("content", function($scope, $http) {
-                    $scope.links = [];
-					$scope.page = 1;
+            app.controller("redirector", function($scope, $window, $http) {
+					$scope.random_url = "";
+					$scope.randomLink = function() {
+					            $scope.random_url = "";
+					            $http.get("http://192.168.0.106:8051/random")
+					                .then(function(response) {
+					                    $scope.random_url = response.data["link"];
+					                    console.log("inside here" + $scope.random_url);
+					                    $window.open($scope.random_url);
+					                });
+					};
+            });
+            app.controller("content", function($scope, $window, $http) {
+                    $scope.links = {};
+					$scope.page = 0;
 					$scope.new_title = "";
+					$scope.random_url = "";
 					$scope.update_list = function(p) {
 					            console.log("LOG:" + p);
+					};
+					$scope.randomLink = function() {
+					            $scope.random_url = "";
+					            console.log("got here");
+					            $http.get("http://192.168.0.106:8051/random")
+					                .then(function(response) {
+					                    $scope.random_url = response.data["link"];
+					                });
+					            $window.open($scope.random_url);
 					};
 					$scope.removeLink = function(id) {
 					            console.log("index:" + id + $scope.links[id]);
@@ -103,14 +124,17 @@
                         }
                     };
 
+                    $scope.get_next_page();
 					/*
 					$scope.update_list = function(p) {*/
+					/*
 	                    $http.get("http://192.168.0.106:8051/url") //?page=" + $scope.page)
                         	.then(function(response) {
                             	$scope.links = response.data;
 					            // console.log($scope.links);
 					            // console.log("TEST LOG" + $scope.links.indexOf("asdsad"));
                         	});
+                        	*/
 					//};
                     });
         </script>
