@@ -5,6 +5,8 @@
             .top-buffer { margin-top:20px; }
         </style>
 
+        <title>Link Aggregator</title>
+
         <!-- Latest compiled and minified CSS -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 
@@ -68,6 +70,27 @@
 					                    console.log("removeLink:" + response.data);
 					                });
 					};
+					$scope.get_next_page = function() {
+					    $scope.page += 1;
+					    count = 0;
+					    $http.get("http://192.168.0.106:8051/url?page=" + $scope.page)
+                        	.then(function(response) {
+                            	tmp_links = response.data;
+                            	for (var prop in tmp_links) {
+                            	    console.log("loop: " + prop + count);
+                            	    count += 1;
+                            	    break;
+                            	}
+                            	if (count != 0) {
+                                    $scope.links = $.extend($scope.links, tmp_links);
+                                    count = 0;
+                            	} else {
+                            	    console.log("empty: " + $scope.page);
+                            	    $scope.page -= 1;
+                            	    $("#warning_links").show();
+                            	}
+                        	});
+					};
 					$scope.submit_data = function(id, t) {
                         console.log(id + " " + t);
                         if (t != "") { 
@@ -89,7 +112,6 @@
 					            // console.log("TEST LOG" + $scope.links.indexOf("asdsad"));
                         	});
 					//};
-					$scope.update_list($scope.page);
                     });
         </script>
     </body>
