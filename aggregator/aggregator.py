@@ -228,7 +228,7 @@ def main():
             print("Error" + str(e))
         print("TEST...........")
         #break
-    #update_time(mt_before, datetime.today())
+    update_time(mt_before, datetime.today())
     try:
         session.commit()
     except:
