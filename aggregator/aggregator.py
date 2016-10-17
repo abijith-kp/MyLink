@@ -1,11 +1,25 @@
 from __future__ import print_function
 import httplib2
 import os
+import sys
+import base64
+import urllib2
 
 from apiclient import discovery
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
+
+from config import *
+
+from models import Links, Base, Config
+from sqlalchemy import create_engine
+
+from datetime import datetime
+import datetime as dtime
+import time
+from sqlalchemy.orm import sessionmaker
+from bs4 import BeautifulSoup
 
 try:
     import argparse
@@ -15,10 +29,20 @@ except ImportError:
 
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/gmail-python-quickstart.json
-SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
-CLIENT_SECRET_FILE = 'client_secret.json'
-APPLICATION_NAME = 'Gmail API Python Quickstart'
+#SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
+#CLIENT_SECRET_FILE = 'client_secret.json'
+#APPLICATION_NAME = 'Gmail API Python Quickstart'
 
+def create_session():
+    global session
+    global config_session
+
+    #engine = create_engine('sqlite:////home/abijith/Projects/links/proto.db', echo=False)
+    engine = create_engine(SQLITE_DB, echo=False)
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    config_session = session.query(Config)
 
 def get_credentials():
     """Gets valid user credentials from storage.
@@ -48,58 +72,6 @@ def get_credentials():
         print('Storing credentials to ' + credential_path)
     return credentials
 
-import pprint
-import sys
-import base64
-import email
-import httplib
-import urlparse
-import urllib2
-
-#----------------------------
-# Turn Foreign Key Constraints ON for
-# each connection.
-#----------------------------
-
-from sqlalchemy.engine import Engine
-from sqlalchemy import event
-
-@event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
-
-#----------------------------
-# Create the engine
-#----------------------------
-
-from models import Links, Base, Config
-from hashlib import md5
-from sqlalchemy import create_engine
-
-engine = create_engine('sqlite:////home/abijith/Projects/links/proto.db', echo=False)
-
-#----------------------------
-# Create the Schema
-#----------------------------
-
-Base.metadata.create_all(engine)
-
-#----------------------------
-# Create the Session class 
-#----------------------------
-
-from datetime import datetime
-import datetime as dtime
-import time
-from sqlalchemy.orm import sessionmaker
-from bs4 import BeautifulSoup
-
-Session = sessionmaker(bind=engine)
-session = Session()
-config_session = session.query(Config)
-
 def get_title(url):
     title = url
     try:
@@ -118,17 +90,13 @@ def get_title(url):
 
 def db_add_url(url, msg_time=None):
     title = get_title(url)
-    checksum = md5(url).digest().encode('hex')
-    l = Links(link=url, title=title, uuid=checksum, updated=msg_time)
+    l = Links(link=url, title=title, updated=msg_time)
     session.add(l)
-
-def check_url(url):
-    c = httplib.HTTPConnection(url)
-    c.request("HEAD", '')
-    if c.getresponse().status == 200:
-        return True
-    else:
-        return False
+    try:
+        session.commit()
+    except Exception, e:
+        session.rollback()
+        print("ERROR: %s" % (e))
 
 def check_page(url):
     try:
@@ -142,17 +110,19 @@ def check_page(url):
         return False
 
 def create_service():
-    credentials = get_credentials()
-    http = credentials.authorize(httplib2.Http())
-    service = discovery.build('gmail', 'v1', http=http)
+    service = None
+    try:
+        credentials = get_credentials()
+        http = credentials.authorize(httplib2.Http())
+        service = discovery.build('gmail', 'v1', http=http)
+    except:
+        pass
     return service
 
 def get_config(arg):
     conf_lu = config_session.first()
     if not conf_lu:
         return None
-    elif arg == "lu":
-            return conf_lu.last_updated
     elif arg == "mta":
             return conf_lu.last_updated_after
     elif arg == "mtb":
@@ -195,40 +165,6 @@ def get_message2(service, mt_before, mt_after, subject="Links"):
         print("Query: %s" % (query))
     return final_list
 
-
-
-def get_message(service, last_updated, subject="Links"):
-    results = None
-    if last_updated:
-        #last_epoch = datetime.strftime(last_updated, "%Y/%m/%d").timetuple()
-        last_epoch = time.mktime(last_updated.timetuple())
-        today = get_today()
-        query = "subject:%s after:%d before:%d" % (subject, last_epoch, today)
-        results = service.users().messages().list(userId='me', q=query).execute()
-        print("Query: %s" % (query))
-        print(results)
-    else:
-        query = "subject:%s" % (subject)
-        results = service.users().messages().list(userId='me', q=query).execute()
-        print("Query: %s" % (query))
-        print(results)
-    return results
-
-def update_last_update(msg_time):
-    conf_lu = None
-    #conf_lu = config_session.first()
-    try:
-        conf_lu = config_session.first()
-    except:
-        session.rollback()
-        conf_lu = config_session.first()
-
-    if conf_lu:
-        conf_lu.last_updated = msg_time
-    else:
-        conf_lu = Config(last_updated=msg_time)
-        session.add(conf_lu)
-    
 def update_time(mt_before, mt_after):
     conf_lu = config_session.first()
     if conf_lu:
@@ -240,14 +176,13 @@ def update_time(mt_before, mt_after):
  
 def main():
     service = create_service()
+    if not service:
+        print("ERROR in connection. Exiting")
+        sys.exit(1)
 
-    last_updated = get_config("lu")
+    create_session()
     mt_before = get_config("mtb")
     mt_after = get_config("mta")
-    #results = service.users().messages().list(userId='me', q='subject:Links').execute()
-    #pprint.pprint(results)
-    #results = get_message(service, last_updated)
-    #results = get_message2(service, mt_before, mt_after)
     msgs = get_message2(service, mt_before, mt_after)
     
     #msgs = results.get('messages', [])
@@ -264,9 +199,7 @@ def main():
 
         for p in parts:
             if p['mimeType'] == "text/plain":
-                #pprint.pprint(p)
                 msg_str = base64.urlsafe_b64decode(p['body']['data'].encode('ASCII'))
-                e = email.message_from_string(msg_str)
                 #print(msg_str)
                 for u in msg_str.splitlines():
                     if check_page(u):
@@ -276,9 +209,10 @@ def main():
                         print("Url: " + u + " Time: " + str(msg_time) + " Status: False")
                 print("\n")
 
+        print(mt_before, mt_after, msg_time)
         if not mt_before and not mt_after:
-            mt_before = msg_time #- dtime.timedelta(seconds=1)
-            mt_after = msg_time# + dtime.timedelta(seconds=1)
+            mt_before = msg_time
+            mt_after = msg_time
 
         else:
             if msg_time < mt_before:
@@ -286,23 +220,20 @@ def main():
             elif msg_time > mt_after:
                 mt_after = msg_time 
 
-        update_last_update(msg_time)
         update_time(mt_before, mt_after)
         try:
             session.commit()
         except:
             session.rollback()
             print("Error" + str(e))
-            pass
-    update_time(mt_before, datetime.today())
+        print("TEST...........")
+        #break
+    #update_time(mt_before, datetime.today())
     try:
         session.commit()
     except:
         session.rollback()
         print("Error" + str(e))
-        pass
-    #print(url_list)
-    #session.commit()
 
 if __name__ == '__main__':
     main()
