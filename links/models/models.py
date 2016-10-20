@@ -5,8 +5,6 @@ from sqlalchemy.orm import sessionmaker
 
 from .. import db
 
-# Base = declarative_base()
-
 class Links(db.Model):
     __tablename__ = 'links'
 

@@ -37,9 +37,7 @@
       </div>
 
     
-    <!-- div class="panel panel-primary vertical-center-row" data-ng-view></div -->
    <div class="" style="margin: 0 15%;" data-ng-view></div>
-    <!-- div data-ng-view></div -->
 
         <script>
             var app = angular.module("root", ["ngRoute"]);
@@ -58,10 +56,9 @@
 					$scope.random_url = "";
 					$scope.randomLink = function() {
 					            $scope.random_url = "";
-					            $http.get("http://192.168.0.106:8051/random")
+					            $http.get("/random")
 					                .then(function(response) {
 					                    $scope.random_url = response.data["link"];
-					                    console.log("inside here" + $scope.random_url);
 					                    $window.open($scope.random_url);
 					                });
 					};
@@ -71,22 +68,17 @@
 					$scope.page = 0;
 					$scope.new_title = "";
 					$scope.random_url = "";
-					$scope.update_list = function(p) {
-					            console.log("LOG:" + p);
-					};
 					$scope.randomLink = function() {
 					            $scope.random_url = "";
-					            console.log("got here");
-					            $http.get("http://192.168.0.106:8051/random")
+					            $http.get("/random")
 					                .then(function(response) {
 					                    $scope.random_url = response.data["link"];
 					                });
 					            $window.open($scope.random_url);
 					};
 					$scope.removeLink = function(id) {
-					            console.log("index:" + id + $scope.links[id]);
 					            delete $scope.links[id];
-					            $http.get("http://192.168.0.106:8051/del/" + id)
+					            $http.get("/del/" + id)
 					                .then(function(response) {
 					                    console.log("removeLink:" + response.data);
 					                });
@@ -94,30 +86,28 @@
 					$scope.get_next_page = function() {
 					    $scope.page += 1;
 					    count = 0;
-					    $http.get("http://192.168.0.106:8051/url?page=" + $scope.page)
+					    $http.get("/url?page=" + $scope.page)
                         	.then(function(response) {
                             	tmp_links = response.data;
                             	for (var prop in tmp_links) {
-                            	    console.log("loop: " + prop + count);
                             	    count += 1;
                             	    break;
                             	}
                             	if (count != 0) {
-                                    $scope.links = $.extend($scope.links, tmp_links);
+                                    $scope.links = $.extend($scope.links,
+                                    tmp_links);
                                     count = 0;
                             	} else {
-                            	    console.log("empty: " + $scope.page);
                             	    $scope.page -= 1;
                             	    $("#warning_links").show();
                             	}
                         	});
 					};
 					$scope.submit_data = function(id, t) {
-                        console.log(id + " " + t);
                         if (t != "") { 
                             $scope.links[id][1] = t;
                             $scope.new_title = "";
-                            $http.get("http://192.168.0.106:8051/update/" + id + "?title=" + t)
+                            $http.get("/update/" + id + "?title=" + t)
                                 .then(function(response) {
                                     console.log("removeLink:" + response.data);
                                 });
@@ -125,17 +115,6 @@
                     };
 
                     $scope.get_next_page();
-					/*
-					$scope.update_list = function(p) {*/
-					/*
-	                    $http.get("http://192.168.0.106:8051/url") //?page=" + $scope.page)
-                        	.then(function(response) {
-                            	$scope.links = response.data;
-					            // console.log($scope.links);
-					            // console.log("TEST LOG" + $scope.links.indexOf("asdsad"));
-                        	});
-                        	*/
-					//};
                     });
         </script>
     </body>

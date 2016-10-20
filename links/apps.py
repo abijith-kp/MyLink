@@ -1,3 +1,3 @@
 from flask import Flask
 
-links_app = Flask("links")
+mylink = Flask("links")

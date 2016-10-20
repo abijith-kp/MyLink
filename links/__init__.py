@@ -1,9 +1,9 @@
-from apps import links_app
+from apps import mylink
 
 from flask_sqlalchemy import SQLAlchemy
 
-links_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///proto.db'
-links_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
-db = SQLAlchemy(links_app)
-with links_app.app_context():
+mylink.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///proto.db'
+mylink.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+db = SQLAlchemy(mylink)
+with mylink.app_context():
     db.create_all()
