@@ -1,7 +1,7 @@
 MyLink
 ======
 
-I have always wanted to create an application wich could help with aggregating all the
+For sometime now, I was planing to create an application which could help with aggregating all the
 links that I send to my mail id. I have this habit of sending links/urls of any
 interesting things that I find on the internet, something like archiving them
 for future reading or reference purposes.
@@ -96,9 +96,5 @@ values as per what you wanted
 How to contribute:
 ------------------
 
-Just create a pull request. Fell free to provide any suggestion. This is just a
-starting point for the project. All kinds of inputs regarding any improvements or new
-features are highly appreciated.
-
-I will try to raise some issues that I find out myself, and also the list of
-features that I have plans of implementing.
+Just create a pull request. Fell free to provide any kind suggestions. All kinds of inputs
+regarding any improvements or new features are highly appreciated.
